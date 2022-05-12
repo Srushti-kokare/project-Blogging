@@ -82,109 +82,21 @@ const getBlogs= async function(req, res)
         }
     }
 //////////////////////////////////////////////////////////////////////////////////////////////
-const updateBlogs= async function(req, res)
-{
-    try
-        {
-            let blogId=req.params.blogId;
-            let body=req.body;
-            if(Object.keys(body).length===0){
-                return res.status(400).send({status: false, msg: "Enter Data to update."})
-            }
-            let validBlog= await BlogsModel.findOne({$and:[{_id:blogId}, {isDeleted:false}]})
-            if(!validBlog)
-                            {
-                    return res.status(404).send({status:false, msg:"Blog not found"})
-                }
-            let tagsUpdates=body.tags;
-            let subCatUpdates=body.subcategory;
-            if((tagsUpdates===undefined)&&(subCatUpdates===undefined))
-                {
-                    let updations= await BlogsModel.findOneAndUpdate({_id:blogId},{ $set:body},{new:true})
-                if(updations.isPublished==true)
-                    {
-                        let publishDate= await BlogsModel.findOneAndUpdate({_id:blogId}, {publishedAt:Date.now()},{new:true})
-                        return res.status(200).send({status:true, data:publishDate})            
-                    }
-                return res.status(200).send({status:true, data:updations})
-                }
-
-            if((tagsUpdates!==undefined)&&(subCatUpdates===undefined))
-                {
-                    delete body.tags;
-                    let updations= await BlogsModel.findOneAndUpdate({_id:blogId},{ $set:body},{new:true})
-                    if(updations.isPublished==true)
-                        {
-                            let publishDate= await BlogsModel.findOneAndUpdate({_id:blogId}, {publishedAt:Date.now()},{new:true})
-                            //return res.status(200).send({status:true,data:publishDate})
-                        }
-                    let arr=updations.tags;
-                    let newArr=arr.concat(tagsUpdates);
-                    let updation2=await BlogsModel.findOneAndUpdate({_id:blogId},{ $set:{tags:newArr}},{new:true})
-                    return res.status(200).send({status:true,data:updation2})
-
-                }
-
-if((tagsUpdates===undefined)&&(subCatUpdates!==undefined))
-                {
-    delete body.subcategory;
-    let updations= await BlogsModel.findOneAndUpdate(
-        {_id:blogId},
-        { $set:body},// isPublished:true, publishedAt:Date.now }},
-        {new:true}
-    )
-    if(updations.isPublished==true)
-    {
-        let publishDate= await BlogsModel.findOneAndUpdate(
-            {_id:blogId}, {publishedAt:Date.now()},{new:true})
-            //return res.status(200).send({status:true,data:publishDate})
-            
+const updateBlogs = async function (req, res) {
+    try {
+      let updateblog = req.params.blogId
+      let update = await blogsModel.findById(updateblog)
+      if (!updateblog) {
+        return res.status(404).send({ msg: "Invalid Blog" })
+      }
+      let updatedata = req.body;
+      let updatedUser = await blogsModel.findOneAndUpdate({ _id: updateblog }, { title: updatedata.title, body: updatedata.body, tags: updatedata.tags, subcategory: updatedata.subcategory, isPublished:updatedata.isPublished,isDeleted:updatedata.isDeleted }, { new: true, upsert: true });
+      res.status(200).send({ status: true, data: updatedUser })
+  
+    } catch (err) {
+      res.status(500).send({ Error: err.message })
     }
-    let arr=updations.subcategory;
-    let newArr=arr.concat(subCatUpdates);
-    let updation2=await BlogsModel.findOneAndUpdate(
-        {_id:blogId},
-        { $set:{subcategory:newArr}},// isPublished:true, publishedAt:Date.now }},
-        {new:true}
-    )
-    return res.status(200).send({status:true,data:updation2})
-
-}
-
-if((tagsUpdates!==undefined)&&(subCatUpdates!==undefined))
-{
-    delete body.tags;
-    delete body.subcategory;
-    let updations= await BlogsModel.findOneAndUpdate(
-        {_id:blogId},
-        { $set:body},// isPublished:true, publishedAt:Date.now }},
-        {new:true}
-    )
-    if(updations.isPublished==true)
-    {
-        let publishDate= await BlogsModel.findOneAndUpdate(
-            {_id:blogId}, {publishedAt:Date.now()},{new:true})
-            //return res.status(200).send({status:true,data:publishDate})
-            
-    }
-    let arr=updations.tags;
-    let arr1=updations.subcategory;
-    let newArr=arr.concat(tagsUpdates);
-    let newArr1=arr1.concat(subCatUpdates);
-    let updation2=await BlogsModel.findOneAndUpdate(
-        {_id:blogId},
-        { $set:{tags:newArr, subcategory:newArr1}},// isPublished:true, publishedAt:Date.now }},
-        {new:true}
-    )
-    return res.status(200).send({status:true,data:updation2})
-
-}
-}
-catch(error){
-    return res.status(500).send({msg: "Error", error:error.message})
-}
-}
-
+  }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const deleteBlogById= async function(req,res)
